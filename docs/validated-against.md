@@ -126,6 +126,81 @@ deferred and gated on real fixtures. The no-panic contract is property-tested; t
 cargo-fuzz harness is committed but not deep-run, so this is "property-tested," not
 "fuzzed." See `CHANGELOG.md` for the release summary.
 
-### Reference markers
+## Public sample set (TechPowerUp SPD-Z), six DDR5 modules
+
+Six additional real modules, added together. They widen the enumerable set from one module to seven and, more usefully, they are the first coverage of four things the original fixture could not speak to at all: a **second EXPO profile**, a module whose **EXPO tRAS is below its tRCD**, a **CUDIMM**, and a module with **no XMP block at all**.
+
+### Provenance is weaker than the entry above, and here is exactly how
+
+These six come from the TechPowerUp SPD-Z sample collection, not from a community SPD-recovery repository. That difference matters to every claim below and is stated before the claims rather than after them.
+
+- **The dumps are partially anonymised.** Five carry serial `99999999` and a placeholder part number (`REPLACE TEXT WITH SKU` or `REPLACE WITH SKU`); one carries a genuine serial, `0202CBF7`, with the part text replaced. So the **JEP-106 manufacturer oracle that the entry above uses is unavailable here** — the module-manufacturer field decodes to a raw bank/code pair rather than a name, and `module_manufacturer_id` is not surfaced for these. That is not a decoder defect; the field is genuinely scrubbed at source.
+- **What survives is stronger than a name check, and is what these are actually validated on.** Every dump's stored base configuration CRC recomputes exactly (the table below), which is a content-integrity proof over bytes 0-509 independent of any label. Every vendor block CRC recomputes exactly. And on the four modules carrying both XMP 3.0 and AMD EXPO, the two independent encodings of the same advertised rating **decode to identical values** — a genuine cross-format agreement that no single-format dump can provide.
+- **No field-by-field cross-check against other decoders was performed for these six.** The entry above carries that; these do not, and claiming it would be claiming work not done.
+
+### The set
+
+| Fixture | sha256 (first 16) | Base CRC | Module | Profiles |
+| --- | --- | --- | --- | --- |
+| `biwin-ddr5-6000_99999999.spd` | `00014112383ef10c` | `0xC567` match | UDIMM, 16 Gb, x8 | EXPO + XMP, both CL28 |
+| `gskill-ddr5-6000-expo_99999999.spd` | `7f9e6a024f6e7d6b` | `0x89D8` match | UDIMM, 16 Gb, x8 | EXPO only, CL26 |
+| `gskill-ddr5-6000-expo-ull_99999999.spd` | `20358e9a3654c389` | `0xAC67` match | UDIMM, 16 Gb, x8 | EXPO only, **two profiles** |
+| `patriot-ddr5-6000-96gb_99999999.spd` | `151d4a43de2d1eee` | `0x02E9` match | UDIMM, 24 Gb, x8 | EXPO + XMP, both 2 profiles |
+| `teamgroup-ddr5-7200_0202cbf7.spd` | `8957fad2a584e68c` | `0x6FEC` match | UDIMM, 24 Gb, x8 | EXPO + XMP, 7200 + 6000 |
+| `teamgroup-ddr5-8800-cudimm_99999999.spd` | `754b3a70d6aede73` | `0x4762` match | **CUDIMM**, 24 Gb, x8 | XMP only, 8800 + 9500 |
+
+Full sha256 values:
+
+```
+biwin-ddr5-6000_99999999.spd              00014112383ef10cb0e9e738b08e48cec599ff04f5e2f346dfaead877c9e1a61
+gskill-ddr5-6000-expo_99999999.spd         7f9e6a024f6e7d6bffa42e822e26a901db451bd27f0de462120781e663d08410
+gskill-ddr5-6000-expo-ull_99999999.spd    20358e9a3654c3898fb9663bda0492d67bb1212388ad9372b401432ebc9f0c5b
+patriot-ddr5-6000-96gb_99999999.spd       151d4a43de2d1eee003f3e35627751a9099355e0809bdbe2091df4758153515d
+teamgroup-ddr5-7200_0202cbf7.spd          8957fad2a584e68ca2a28d84909ddbe001b78ddccb2a0901111d212fd703eadd
+teamgroup-ddr5-8800-cudimm_99999999.spd   754b3a70d6aede737e6835d1d89cf99d9a0cda96b14c81cc4425ed381c7ebbea
+```
+
+All six are 1024 bytes, matching the DDR5 SPD image size asserted by `fixture_is_1024_bytes`.
+
+### Confirmed by decode
+
+Base configuration CRC, computed over bytes 0-509 with the same CRC-16/XMODEM primitive verified in Phase 2 and compared against the stored bytes 510-511: computed equals stored on **all six**. Vendor block CRCs likewise: EXPO block CRCs `0x1B6E` (Biwin), `0xE5C0` (G.Skill EXPO), `0x67EB` (G.Skill ULL), `0xBBDE` (Patriot), `0x4590` (TeamGroup 7200) all recompute exactly.
+
+**Rated timings, the value oracle.** Each profile's decoded rating is checked against what the product is sold as:
+
+- Biwin DDR5-6000 CL28: 6000 MT/s (tCK 333 ps), CL28, tRCD/tRP 11655 ps (35 clocks), tRAS 23976 ps (72 clocks), 1.400 V. Identical under XMP and EXPO.
+- G.Skill DDR5-6000 EXPO: 6000 MT/s, CL26, tRAS 31980 ps (96 clocks), 1.400 V.
+- G.Skill DDR5-6000 **EXPO ULL**: profile 1 and profile 2, both CL30 / 6000 MT/s / 1.350 V, differing **only in tRAS** — profile 1 at 10660 ps (32 clocks), profile 2 at 31980 ps (96 clocks). This matches the published rating of the ULL kit, which is sold as `30-38-38-32` against a standard EXPO `30-38-38-96`.
+- Patriot DDR5-6000 96 GB: two profiles under both XMP and EXPO — CL28 / tRAS 33300 ps at 1.400 V, and CL36 / tRAS 25308 ps at 1.350 V.
+- TeamGroup DDR5-7200: profile 1 at 7200 MT/s (tCK 277 ps) CL34 / tRAS 23268 ps, profile 2 at 6000 MT/s CL38 / tRAS 25974 ps. Identical under XMP and EXPO.
+- TeamGroup DDR5-8800 CUDIMM: XMP only, 8800 MT/s (tCK 227 ps) CL42 and 9500 MT/s (tCK 211 ps) CL44, both 1.450 V.
+
+**Two observations that are findings about the sample set, not about the decoder:**
+
+- **G.Skill's two AMD-oriented kits carry EXPO and no XMP block at all** (`xmp: Absent`), while the Biwin, Patriot and TeamGroup kits carry both. AMD-only branding does not imply EXPO-only in general — Patriot and TeamGroup ship dual-format — so this is a per-vendor product decision and not a pattern the decoder is entitled to generalise.
+- **The CUDIMM resolves to the explicit not-yet-decoded result**, `module_specific: NotYetDecoded(Cudimm)`, exactly as the deferred-scope policy requires. Its XMP block decodes normally (two profiles, CRC-clean). This is the first fixture of a non-UDIMM module type, and it confirms the deferral is a real dispatch outcome on a real module rather than an untested branch.
+
+### Linter findings on the new set, recorded rather than suppressed
+
+These six are **not** added to the `fixture_lints_clean` invariant, and the reason is the point of the set. The original fixture still lints clean under the full Phase 10 rule set and that test is untouched. The new modules lint as follows, and the distribution is the finding:
+
+| Fixture | Findings | Severity mix |
+| --- | --- | --- |
+| Biwin | 3 | 3 warnings |
+| G.Skill EXPO | 6 | 6 warnings |
+| G.Skill **EXPO ULL** | 10 | 9 warnings, **1 error** |
+| Patriot | 3 | 3 warnings |
+| TeamGroup 7200 | 3 | 3 warnings |
+| TeamGroup CUDIMM | 4 | 3 warnings, 1 info (`non-standard-data-rate`, the 9500 bin) |
+
+**`timing-ordering-violation` on the ULL kit is a real rule-versus-product disagreement and is left open on purpose.** The rule asserts `tRAS >= tRCD`. The G.Skill EXPO ULL profile 1 decodes tRAS 10660 ps against tRCD 12659 ps, and G.Skill sells that exact rating (`30-38-38-32`). Either the ordering rule needs an EXPO ULL exception, or it is reporting something about the profile that is intended. This document does not decide that; it records that a widely-shipped, vendor-certified profile trips an error-severity rule, which is on its face a defect in the rule, the severity, or the assumption that the ordering is universal. It is left failing rather than special-cased away because the honest state of the question is open.
+
+**`non-integer-clock-timing` and `non-integer-cas-latency` appear on five of six modules and are treated as a tolerance question, not a module defect.** The encoded ps values are not exact whole multiples of tCK — 12659 ps against a 333 ps tCK, for instance. That pattern across five independent vendors is a decode-tolerance characteristic, not five modules with sub-clock timings.
+
+### Why this does not widen any correctness claim
+
+The set adds modules, not claims. What is now enumerable is seven real modules across five vendors and four module-relevant shapes (UDIMM 16 Gb, UDIMM 24 Gb, CUDIMM, and dual- versus EXPO-only profile blocks). What remains deferred is unchanged: SODIMM, RDIMM and LRDIMM module-specific decoding; full JEDEC sub-grade-table conformance; the tFAW >= 4 x tRRD_S ordering; and the remaining profile timings inside the CRC-confirmed region that are not surfaced. The EXPO 1.2 / EXPO ULL subtimings — `tREFI`, `tRRD_S`, `tWR` and the VDDP voltage lock — are **not decoded at all**, and the ULL fixture is the evidence for that gap rather than a closure of it: the ULL profile is visible only through its effect on the standard tRAS field.
+
+## Reference markers
 
 All carried markers are now closed: the main configuration CRC in Phase 2, the module manufacturer ID and manufacturing date in Phase 5, and the rated speed and the XMP / EXPO section CRCs in Phase 9a above. The semantic-linter pass over the now-decoded XMP/EXPO profiles is also done (Phase 9b, above). The remaining unimplemented surface is not a reference marker but deferred decode work, gated on real fixtures: the SODIMM / RDIMM / LRDIMM module-specific blocks.
