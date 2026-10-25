@@ -496,15 +496,18 @@ fn voltage(byte: u8) -> Millivolts {
 
 /// Derive the rated CAS latency: tAA in whole cycles of the cycle time, rounded
 /// to nearest. Guards a zero cycle time (returns 0) so malformed input cannot
-/// divide by zero. Decoded values are 16-bit picoseconds, so the rounded
-/// quotient fits `u16`; the narrowing saturates instead of wrapping if a caller
-/// ever hand-builds out-of-range values.
+/// divide by zero. The add and the divide run in `u64`, so the round-to-nearest
+/// stays exact for any `u32` input instead of saturating the add and rounding
+/// down. Decoded values are 16-bit picoseconds, so the rounded quotient fits
+/// `u16`; only the narrowing saturates, instead of wrapping if a caller ever
+/// hand-builds out-of-range values.
 fn rated_cas_latency(taa: Picoseconds, cycle_time: Picoseconds) -> u16 {
     let tck = cycle_time.0;
     if tck == 0 {
         return 0;
     }
-    u16::try_from(taa.0.saturating_add(tck / 2) / tck).unwrap_or(u16::MAX)
+    let numerator = u64::from(taa.0) + u64::from(tck / 2);
+    u16::try_from(numerator / u64::from(tck)).unwrap_or(u16::MAX)
 }
 
 /// Read a 16-byte profile name at `off`, trimmed of trailing spaces and NULs.
@@ -581,6 +584,17 @@ mod tests {
         assert_eq!(
             rated_cas_latency(Picoseconds(65_535), Picoseconds(1)),
             65_535
+        );
+    }
+
+    #[test]
+    fn rated_cas_latency_rounds_in_u64() {
+        // The round-to-nearest is computed in `u64`, so it does not round down
+        // near the top of the `u32` range: 4294967295 / 2147483648 rounds to 2,
+        // where a saturating `u32` add would have given 1.
+        assert_eq!(
+            rated_cas_latency(Picoseconds(u32::MAX), Picoseconds(1 << 31)),
+            2
         );
     }
 

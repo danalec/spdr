@@ -28,8 +28,9 @@ jobs:
       - name: Clippy
         run: cargo clippy --workspace --all-targets -- -D warnings
 
-      # Rustdoc warnings (broken intra-doc links, missing `# Errors` sections
-      # under the denied clippy lints) are build failures here too. `--lib` keeps
+      # Rustdoc warnings (broken intra-doc links) are build failures here too.
+      # Missing `# Errors` sections are caught by the Clippy step above, through
+      # the denied `missing_errors_doc` lint. `--lib` keeps
       # the doc set to the two library APIs and dodges the known output-filename
       # collision between the `spdr` lib and the `spdr` binary (cargo#6313).
       - name: Docs
