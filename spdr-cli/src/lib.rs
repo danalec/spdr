@@ -159,7 +159,7 @@ fn run_decode(args: &DecodeArgs) -> i32 {
     };
     println!("{rendered}");
 
-    i32::from(!results.all_decoded())
+    if results.all_decoded() { 0 } else { 1 }
 }
 
 // --- Lint surface ----------------------------------------------------------

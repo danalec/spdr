@@ -217,7 +217,7 @@ impl Timings {
 /// # Errors
 ///
 /// Returns [`DecodeError::Truncated`] if the image is too short for a required
-/// byte — the only error this can return.
+/// byte; the only error this can return.
 pub fn decode_timings(bytes: &[u8]) -> Result<Timings, DecodeError> {
     let spd = SpdImage::new(bytes);
 
@@ -285,10 +285,9 @@ fn decode_cas_latencies(spd: &SpdImage) -> Result<CasLatencies, DecodeError> {
 }
 
 /// Data rate in MT/s for a clock period, rounded to the nearest 100; 0 if the
-/// period is zero. Crate-visible (this module is private, so `pub` stays
-/// crate-internal) so the XMP/EXPO profile decode derives its rated data rate
-/// through the same rounding rather than duplicating it.
-pub const fn data_rate_mt_s(tckavg_min: Picoseconds) -> u32 {
+/// period is zero. Crate-visible so the XMP/EXPO profile decode derives its
+/// rated data rate through the same rounding rather than duplicating it.
+pub(crate) const fn data_rate_mt_s(tckavg_min: Picoseconds) -> u32 {
     if tckavg_min.0 == 0 {
         return 0;
     }

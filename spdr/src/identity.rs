@@ -154,7 +154,7 @@ impl DensityPerDie {
     }
 }
 
-/// SDRAM I/O device width (DQ pins per device), from bits \[7:5\] of byte 6.
+/// SDRAM I/O device width (DQ pins per device), from bits `[7:5]` of byte 6.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum IoWidth {
@@ -177,7 +177,7 @@ impl IoWidth {
     }
 }
 
-/// Number of bank groups per die, from bits \[7:5\] of byte 7.
+/// Number of bank groups per die, from bits `[7:5]` of byte 7.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum BankGroups {
@@ -200,7 +200,7 @@ impl BankGroups {
     }
 }
 
-/// Number of banks within each bank group, from bits \[2:0\] of byte 7.
+/// Number of banks within each bank group, from bits `[2:0]` of byte 7.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum BanksPerBankGroup {
@@ -221,7 +221,7 @@ impl BanksPerBankGroup {
     }
 }
 
-/// SDRAM package construction, from bits \[7:5\] of byte 4.
+/// SDRAM package construction, from bits `[7:5]` of byte 4.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum PackageType {
@@ -258,7 +258,7 @@ impl fmt::Display for PackageType {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct IdentityAndBase {
-    /// Total addressable size of the SPD device in bytes (byte 0, bits \[6:4\]).
+    /// Total addressable size of the SPD device in bytes (byte 0, bits `[6:4]`).
     pub spd_bytes_total: u16,
     /// SPD revision (byte 1).
     pub spd_revision: SpdRevision,
@@ -268,29 +268,29 @@ pub struct IdentityAndBase {
     pub module_type: ModuleType,
     /// Hybrid-module flag (byte 3, bit 7).
     pub hybrid: bool,
-    /// SDRAM density per die (byte 4, bits \[4:0\]).
+    /// SDRAM density per die (byte 4, bits `[4:0]`).
     pub density_per_die: DensityPerDie,
-    /// SDRAM package construction (byte 4, bits \[7:5\]).
+    /// SDRAM package construction (byte 4, bits `[7:5]`).
     pub package_type: PackageType,
-    /// Number of dies in the SDRAM package (byte 4, bits \[7:5\]).
+    /// Number of dies in the SDRAM package (byte 4, bits `[7:5]`).
     pub die_count: u8,
-    /// Number of row address bits (byte 5, bits \[4:0\], base 16).
+    /// Number of row address bits (byte 5, bits `[4:0]`, base 16).
     pub row_address_bits: u8,
-    /// Number of column address bits (byte 5, bits \[7:5\], base 10).
+    /// Number of column address bits (byte 5, bits `[7:5]`, base 10).
     pub column_address_bits: u8,
-    /// SDRAM I/O device width (byte 6, bits \[7:5\]).
+    /// SDRAM I/O device width (byte 6, bits `[7:5]`).
     pub io_width: IoWidth,
-    /// Bank groups per die (byte 7, bits \[7:5\]).
+    /// Bank groups per die (byte 7, bits `[7:5]`).
     pub bank_groups: BankGroups,
-    /// Banks per bank group (byte 7, bits \[2:0\]).
+    /// Banks per bank group (byte 7, bits `[2:0]`).
     pub banks_per_bank_group: BanksPerBankGroup,
-    /// Package ranks per channel (byte 234, bits \[5:3\], base 1).
+    /// Package ranks per channel (byte 234, bits `[5:3]`, base 1).
     pub package_ranks_per_channel: u8,
     /// Whether the rank organization is asymmetric (byte 234, bit 6).
     pub rank_mix_asymmetric: bool,
-    /// Number of channels (sub-channels) per DIMM (byte 235, bits \[7:5\]).
+    /// Number of channels (sub-channels) per DIMM (byte 235, bits `[7:5]`).
     pub channels_per_dimm: u8,
-    /// Primary bus width per channel in bits (byte 235, bits \[2:0\]).
+    /// Primary bus width per channel in bits (byte 235, bits `[2:0]`).
     pub primary_bus_width_bits: u16,
 }
 
@@ -356,7 +356,7 @@ pub fn decode_identity_and_base(bytes: &[u8]) -> Result<IdentityAndBase, DecodeE
 // Each takes the single raw byte (or the relevant shared byte) and applies one
 // pinned encoding rule, so each is unit-tested in isolation.
 
-/// Byte 0, bits \[6:4\]: total addressable size of the SPD device in bytes.
+/// Byte 0, bits `[6:4]`: total addressable size of the SPD device in bytes.
 const fn decode_spd_bytes_total(byte0: u8) -> Result<u16, DecodeError> {
     match (byte0 >> 4) & 0x07 {
         1 => Ok(256),
@@ -370,7 +370,7 @@ const fn decode_spd_bytes_total(byte0: u8) -> Result<u16, DecodeError> {
     }
 }
 
-/// Byte 1: SPD revision as two plain nibbles, major in \[7:4\], minor in \[3:0\].
+/// Byte 1: SPD revision as two plain nibbles, major in `[7:4]`, minor in `[3:0]`.
 const fn decode_spd_revision(byte1: u8) -> SpdRevision {
     SpdRevision {
         major: byte1 >> 4,
@@ -392,12 +392,12 @@ const fn decode_device_type(byte2: u8) -> Result<DeviceType, DecodeError> {
     }
 }
 
-/// Byte 3: base module type in bits \[3:0\]; hybrid flag in bit 7.
+/// Byte 3: base module type in bits `[3:0]`; hybrid flag in bit 7.
 ///
-/// Crate-visible (this module is private, so `pub` stays crate-internal) so the
-/// module-specific dispatch ([`crate::decode_module_specific`]) routes on the
-/// same single decode of byte 3, rather than duplicating it.
-pub const fn decode_module_type(byte3: u8) -> Result<(ModuleType, bool), DecodeError> {
+/// Crate-visible so the module-specific dispatch
+/// ([`crate::decode_module_specific`]) routes on the same single decode of
+/// byte 3, rather than duplicating it.
+pub(crate) const fn decode_module_type(byte3: u8) -> Result<(ModuleType, bool), DecodeError> {
     let hybrid = byte3 & 0x80 != 0;
     let module_type = match byte3 & 0x0F {
         0x01 => ModuleType::Rdimm,
@@ -420,7 +420,7 @@ pub const fn decode_module_type(byte3: u8) -> Result<(ModuleType, bool), DecodeE
     Ok((module_type, hybrid))
 }
 
-/// Byte 4, bits \[4:0\]: SDRAM density per die.
+/// Byte 4, bits `[4:0]`: SDRAM density per die.
 const fn decode_density_per_die(byte4: u8) -> Result<DensityPerDie, DecodeError> {
     match byte4 & 0x1F {
         0x01 => Ok(DensityPerDie::Gb4),
@@ -438,7 +438,7 @@ const fn decode_density_per_die(byte4: u8) -> Result<DensityPerDie, DecodeError>
     }
 }
 
-/// Byte 4, bits \[7:5\]: package construction and die count.
+/// Byte 4, bits `[7:5]`: package construction and die count.
 const fn decode_package(byte4: u8) -> Result<(PackageType, u8), DecodeError> {
     match (byte4 >> 5) & 0x07 {
         0 => Ok((PackageType::Monolithic, 1)),
@@ -454,17 +454,17 @@ const fn decode_package(byte4: u8) -> Result<(PackageType, u8), DecodeError> {
     }
 }
 
-/// Byte 5, bits \[4:0\]: number of row address bits, base 16.
+/// Byte 5, bits `[4:0]`: number of row address bits, base 16.
 const fn decode_row_address_bits(byte5: u8) -> u8 {
     16 + (byte5 & 0x1F)
 }
 
-/// Byte 5, bits \[7:5\]: number of column address bits, base 10.
+/// Byte 5, bits `[7:5]`: number of column address bits, base 10.
 const fn decode_column_address_bits(byte5: u8) -> u8 {
     10 + ((byte5 >> 5) & 0x07)
 }
 
-/// Byte 6, bits \[7:5\]: SDRAM I/O device width.
+/// Byte 6, bits `[7:5]`: SDRAM I/O device width.
 const fn decode_io_width(byte6: u8) -> Result<IoWidth, DecodeError> {
     match (byte6 >> 5) & 0x07 {
         0 => Ok(IoWidth::X4),
@@ -478,7 +478,7 @@ const fn decode_io_width(byte6: u8) -> Result<IoWidth, DecodeError> {
     }
 }
 
-/// Byte 7, bits \[7:5\]: number of bank groups.
+/// Byte 7, bits `[7:5]`: number of bank groups.
 const fn decode_bank_groups(byte7: u8) -> Result<BankGroups, DecodeError> {
     match (byte7 >> 5) & 0x07 {
         0 => Ok(BankGroups::One),
@@ -492,7 +492,7 @@ const fn decode_bank_groups(byte7: u8) -> Result<BankGroups, DecodeError> {
     }
 }
 
-/// Byte 7, bits \[2:0\]: number of banks per bank group.
+/// Byte 7, bits `[2:0]`: number of banks per bank group.
 const fn decode_banks_per_bank_group(byte7: u8) -> Result<BanksPerBankGroup, DecodeError> {
     match byte7 & 0x07 {
         0 => Ok(BanksPerBankGroup::One),
@@ -505,7 +505,7 @@ const fn decode_banks_per_bank_group(byte7: u8) -> Result<BanksPerBankGroup, Dec
     }
 }
 
-/// Byte 234: package ranks per channel (bits \[5:3\], base 1) and the rank-mix
+/// Byte 234: package ranks per channel (bits `[5:3]`, base 1) and the rank-mix
 /// asymmetry flag (bit 6).
 const fn decode_package_ranks(byte234: u8) -> (u8, bool) {
     let ranks = ((byte234 >> 3) & 0x07) + 1;
@@ -513,7 +513,7 @@ const fn decode_package_ranks(byte234: u8) -> (u8, bool) {
     (ranks, asymmetric)
 }
 
-/// Byte 235, bits \[2:0\]: primary bus width per channel in bits.
+/// Byte 235, bits `[2:0]`: primary bus width per channel in bits.
 const fn decode_primary_bus_width(byte235: u8) -> Result<u16, DecodeError> {
     match byte235 & 0x07 {
         0 => Ok(8),
@@ -527,7 +527,7 @@ const fn decode_primary_bus_width(byte235: u8) -> Result<u16, DecodeError> {
     }
 }
 
-/// Byte 235, bits \[7:5\]: number of channels (sub-channels) per DIMM.
+/// Byte 235, bits `[7:5]`: number of channels (sub-channels) per DIMM.
 const fn decode_channels_per_dimm(byte235: u8) -> Result<u8, DecodeError> {
     match (byte235 >> 5) & 0x07 {
         0 => Ok(1),

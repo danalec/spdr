@@ -61,7 +61,7 @@ impl fmt::Display for Millimeters {
 /// ambiguous letters I, O, Q, S, X, and Z, so the lettering runs A, B, ... H, J,
 /// K, ... Y, then two-letter cards (AA-style) past index 19. A card code of
 /// `0x1f` means no reference raw card (rendered "ZZ"); bit 7 extends the code by
-/// 31 to reach the two-letter range; bits \[6:5\] carry the card revision.
+/// 31 to reach the two-letter range; bits `[6:5]` carry the card revision.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub enum ReferenceRawCard {
@@ -71,7 +71,7 @@ pub enum ReferenceRawCard {
     Card {
         /// Zero-based card index (0 = card "A") with the bit-7 extension applied.
         index: u8,
-        /// Card revision, from bits \[6:5\].
+        /// Card revision, from bits `[6:5]`.
         revision: u8,
     },
 }
@@ -110,13 +110,13 @@ impl fmt::Display for ReferenceRawCard {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct UnbufferedModule {
-    /// Module nominal height (byte 230, bits \[4:0\] + 15 mm). JEDEC encodes this
+    /// Module nominal height (byte 230, bits `[4:0]` + 15 mm). JEDEC encodes this
     /// as the upper bound of a 1 mm range, so a value of 0 means "<= 15 mm".
     pub nominal_height: Millimeters,
-    /// Maximum module thickness on the front (byte 231, bits \[3:0\] + 1 mm), the
+    /// Maximum module thickness on the front (byte 231, bits `[3:0]` + 1 mm), the
     /// upper bound of a 1 mm range.
     pub max_thickness_front: Millimeters,
-    /// Maximum module thickness on the back (byte 231, bits \[7:4\] + 1 mm), the
+    /// Maximum module thickness on the back (byte 231, bits `[7:4]` + 1 mm), the
     /// upper bound of a 1 mm range.
     pub max_thickness_back: Millimeters,
     /// Reference raw card the module is built from (byte 232).
@@ -188,23 +188,23 @@ fn decode_unbuffered(spd: &SpdImage) -> Result<UnbufferedModule, DecodeError> {
 // Each applies one pinned encoding rule to its byte, so each has a focused unit
 // test built straight from the rule.
 
-/// Byte 230, bits \[4:0\]: module nominal height in mm with a 15 mm base.
+/// Byte 230, bits `[4:0]`: module nominal height in mm with a 15 mm base.
 const fn decode_nominal_height(byte230: u8) -> Millimeters {
     Millimeters((byte230 & 0x1F) + 15)
 }
 
-/// Byte 231, bits \[3:0\]: front maximum thickness in mm with a 1 mm base.
+/// Byte 231, bits `[3:0]`: front maximum thickness in mm with a 1 mm base.
 const fn decode_thickness_front(byte231: u8) -> Millimeters {
     Millimeters((byte231 & 0x0F) + 1)
 }
 
-/// Byte 231, bits \[7:4\]: back maximum thickness in mm with a 1 mm base.
+/// Byte 231, bits `[7:4]`: back maximum thickness in mm with a 1 mm base.
 const fn decode_thickness_back(byte231: u8) -> Millimeters {
     Millimeters(((byte231 >> 4) & 0x0F) + 1)
 }
 
-/// Byte 232: reference raw card code (bits \[4:0\]), with the bit-7 extension and
-/// the bits \[6:5\] revision. Code `0x1f` is the defined "no card" value.
+/// Byte 232: reference raw card code (bits `[4:0]`), with the bit-7 extension and
+/// the bits `[6:5]` revision. Code `0x1f` is the defined "no card" value.
 const fn decode_reference_raw_card(byte232: u8) -> ReferenceRawCard {
     let code = byte232 & 0x1F;
     if code == 0x1F {
